@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src {{cspSource}}; script-src 'nonce-{{nonce}}' {{cspSource}};" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+	<title>Project Link Toolbox</title>
+	<link rel="stylesheet" href="{{styleUri}}" />
+</head>
+<body>
+	<header>
+		<h1>Project Link Toolbox</h1>
+	</header>
+	<section class="card">
+		<div class="toolbar">
+			<input id="labelInput" placeholder="Label" />
+			<input id="urlInput" placeholder="https://example.com" />
+			<button class="primary" id="addButton">Add</button>
+			<button class="secondary" id="cancelButton" type="button" hidden>Cancel</button>
+		</div>
+		<div id="status" class="status" role="status"></div>
+		<table>
+			<thead>
+				<tr>
+					<th>Label</th>
+					<th>URL</th>
+					<th>Actions</th>
+				</tr>
+			</thead>
+			<tbody id="linkRows"></tbody>
+		</table>
+		<p class="muted">Changes are saved in workspace storage (workspaceState).</p>
+	</section>
+	<script nonce="{{nonce}}" src="{{scriptUri}}"></script>
+</body>
+</html>

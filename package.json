@@ -1,0 +1,136 @@
+{
+	"name": "project-link-toolbox",
+	"displayName": "project-link-toolbox",
+	"description": "",
+	"version": "0.0.1",
+	"engines": {
+		"vscode": "^1.108.1"
+	},
+	"categories": [
+		"Other"
+	],
+	"activationEvents": [
+		"onView:project-link-toolbox.toolboxView",
+		"onCommand:project-link-toolbox.addLink",
+		"onCommand:project-link-toolbox.openLink",
+		"onCommand:project-link-toolbox.openManager"
+	],
+	"main": "./extension.js",
+	"contributes": {
+		"commands": [
+			{
+				"command": "project-link-toolbox.openLink",
+				"title": "打開專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.openManager",
+				"title": "開啟連結管理 (預覽)"
+			},
+			{
+				"command": "project-link-toolbox.addLink",
+				"title": "新增專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.editLink",
+				"title": "編輯專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.deleteLink",
+				"title": "刪除專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.moveLinkUp",
+				"title": "上移專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.moveLinkDown",
+				"title": "下移專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.moveLinkToTop",
+				"title": "置頂專案工具箱連結"
+			},
+			{
+				"command": "project-link-toolbox.moveLinkToBottom",
+				"title": "置底專案工具箱連結"
+			}
+		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "project-link-toolbox",
+					"title": "專案工具箱",
+					"icon": "media/project-toolbox.png"
+				}
+			]
+		},
+		"views": {
+			"project-link-toolbox": [
+				{
+					"id": "project-link-toolbox.toolboxView",
+					"name": "專案工具箱",
+					"icon": "media/project-toolbox.png"
+				}
+			]
+		},
+		"menus": {
+			"view/title": [
+				{
+					"command": "project-link-toolbox.addLink",
+					"when": "view == project-link-toolbox.toolboxView",
+					"group": "navigation"
+				},
+				{
+					"command": "project-link-toolbox.openManager",
+					"when": "view == project-link-toolbox.toolboxView",
+					"group": "navigation@1"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "project-link-toolbox.editLink",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation"
+				},
+				{
+					"command": "project-link-toolbox.deleteLink",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation@1"
+				},
+				{
+					"command": "project-link-toolbox.moveLinkUp",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation@2"
+				},
+				{
+					"command": "project-link-toolbox.moveLinkDown",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation@3"
+				},
+				{
+					"command": "project-link-toolbox.moveLinkToTop",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation@4"
+				},
+				{
+					"command": "project-link-toolbox.moveLinkToBottom",
+					"when": "view == project-link-toolbox.toolboxView && viewItem == projectToolboxLink",
+					"group": "navigation@5"
+				}
+			]
+		}
+	},
+	"scripts": {
+		"lint": "eslint .",
+		"pretest": "npm run lint",
+		"test": "vscode-test"
+	},
+	"devDependencies": {
+		"@types/vscode": "^1.108.1",
+		"@types/mocha": "^10.0.10",
+		"@types/node": "22.x",
+		"eslint": "^9.39.2",
+		"@vscode/test-cli": "^0.0.12",
+		"@vscode/test-electron": "^2.5.2"
+	}
+}
