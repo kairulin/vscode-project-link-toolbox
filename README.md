@@ -1,65 +1,37 @@
-# project-link-toolbox README
+# Project Link Toolbox
 
-This is the README for your extension "project-link-toolbox". After writing up a brief description, we recommend including the following sections.
+在 VS Code 側邊欄提供「專案連結工具箱」，集中管理常用連結並快速開啟。
 
-## Features
+## 功能特色
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
+- 側邊欄樹狀清單顯示連結，一鍵開啟
+- 連結管理視窗（Webview）新增、編輯、刪除
+- 支援排序：上移、下移、置頂、置底
 
-For example if there is an image subfolder under your extension project workspace:
+## 使用方式
 
-\!\[feature X\]\(images/feature-x.png\)
+1. 開啟側邊欄的「Project Link Toolbox」視圖
+2. 點擊工具列「新增」或「管理」按鈕
+3. 在管理視窗中建立/整理連結
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+## 指令
 
-## Requirements
+- `project-link-toolbox.addLink`: 新增連結
+- `project-link-toolbox.openLink`: 開啟連結
+- `project-link-toolbox.openManager`: 開啟管理視窗
+- `project-link-toolbox.editLink`: 編輯連結
+- `project-link-toolbox.deleteLink`: 刪除連結
+- `project-link-toolbox.moveLinkUp`: 上移連結
+- `project-link-toolbox.moveLinkDown`: 下移連結
+- `project-link-toolbox.moveLinkToTop`: 置頂連結
+- `project-link-toolbox.moveLinkToBottom`: 置底連結
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+## 資料儲存
 
-## Extension Settings
-
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
-
-For example:
-
-This extension contributes the following settings:
-
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against your extension.
+連結清單儲存在 VS Code 的 workspaceState（每個工作區獨立）。
 
 ## Release Notes
 
-Users appreciate release notes as you update your extension.
+### 0.0.1
 
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code.  Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux)
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux)
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+初始版本：提供側邊欄工具箱與連結管理功能。
