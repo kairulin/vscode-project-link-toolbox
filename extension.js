@@ -10,6 +10,7 @@ const path = require('path');
 const LINKS_SETTING_KEY = 'projectLinkToolbox.links';
 const DEFAULT_LINKS = [{ label: 'Example', url: 'https://example.com' }];
 let extensionContext;
+let activeFolderKey;
 
 function getWebviewHtml(webview, context, nonce) {
 	const htmlPath = path.join(context.extensionPath, 'webview', 'managerView.html');
@@ -28,12 +29,13 @@ function getWebviewHtml(webview, context, nonce) {
 	return html;
 }
 
-function getConfiguredLinks() {
+function getConfiguredLinks(folderKey = activeFolderKey) {
 	if (!extensionContext) {
 		return DEFAULT_LINKS;
 	}
 
-	const links = extensionContext.workspaceState.get(LINKS_SETTING_KEY);
+	const resolvedKey = folderKey || LINKS_SETTING_KEY;
+	const links = extensionContext.globalState.get(resolvedKey);
 
 	if (!Array.isArray(links)) {
 		return DEFAULT_LINKS;
@@ -47,13 +49,14 @@ function getConfiguredLinks() {
 	return normalized.length > 0 ? normalized : DEFAULT_LINKS;
 }
 
-async function updateConfiguredLinks(nextLinks) {
+async function updateConfiguredLinks(nextLinks, folderKey = activeFolderKey) {
 	if (!extensionContext) {
 		return;
 	}
 
 	// 使用 workspaceState 儲存，不寫入 .vscode/settings.json
-	await extensionContext.workspaceState.update(LINKS_SETTING_KEY, nextLinks);
+	const resolvedKey = folderKey || LINKS_SETTING_KEY;
+	await extensionContext.globalState.update(resolvedKey, nextLinks);
 }
 
 function isValidUrl(url) {
@@ -109,6 +112,76 @@ function activate(context) {
 	extensionContext = context;
 	let managerPanel;
 
+	function getActiveFolder() {
+		const activeUri = vscode.window.activeTextEditor?.document?.uri;
+		if (activeUri) {
+			const folder = vscode.workspace.getWorkspaceFolder(activeUri);
+			if (folder) {
+				return folder;
+			}
+		}
+
+		const folders = vscode.workspace.workspaceFolders;
+		return folders && folders.length > 0 ? folders[0] : null;
+	}
+
+	function getFolderKey(folder) {
+		if (!folder?.uri) {
+			return LINKS_SETTING_KEY;
+		}
+		if (folder.uri.scheme === 'file') {
+			const normalizedPath =
+				process.platform === 'win32'
+					? path.normalize(folder.uri.fsPath).toLowerCase()
+					: path.normalize(folder.uri.fsPath);
+			return `${LINKS_SETTING_KEY}:file:${normalizedPath}`;
+		}
+		return `${LINKS_SETTING_KEY}:${String(folder.uri.toString())}`;
+	}
+
+	function syncActiveFolderKey() {
+		const activeUri = vscode.window.activeTextEditor?.document?.uri;
+		if (activeUri) {
+			const folder = vscode.workspace.getWorkspaceFolder(activeUri);
+			if (folder) {
+				activeFolderKey = getFolderKey(folder);
+				return folder;
+			}
+		}
+
+		if (activeFolderKey) {
+			return null;
+		}
+
+		const fallbackFolder = getActiveFolder();
+		activeFolderKey = getFolderKey(fallbackFolder);
+		return fallbackFolder;
+	}
+
+	async function ensureFolderLinksSeeded(folder, folderKey) {
+		if (!extensionContext) {
+			return;
+		}
+		if (!folderKey || folderKey === LINKS_SETTING_KEY) {
+			return;
+		}
+
+		const existing = extensionContext.globalState.get(folderKey);
+		if (Array.isArray(existing)) {
+			return;
+		}
+
+		const legacyUriKey = folder?.uri ? `${LINKS_SETTING_KEY}:${String(folder.uri.toString())}` : null;
+		const baseLinks =
+			(legacyUriKey && extensionContext.globalState.get(legacyUriKey)) ||
+			extensionContext.workspaceState.get(folderKey) ||
+			(legacyUriKey && extensionContext.workspaceState.get(legacyUriKey)) ||
+			extensionContext.workspaceState.get(LINKS_SETTING_KEY);
+		if (Array.isArray(baseLinks)) {
+			await extensionContext.globalState.update(folderKey, baseLinks);
+		}
+	}
+
 	function broadcastLinks(links) {
 		if (managerPanel) {
 			managerPanel.webview.postMessage({ type: 'links', links });
@@ -124,7 +197,7 @@ function activate(context) {
 		vscode.env.openExternal(vscode.Uri.parse(url));
 	});
 
-	const openManagerCommand = vscode.commands.registerCommand('project-link-toolbox.openManager', function () {
+	const openManagerCommand = vscode.commands.registerCommand('project-link-toolbox.openManager', async function () {
 		const panel = vscode.window.createWebviewPanel(
 			'projectLinkToolboxManager',
 			'Project Link Toolbox',
@@ -134,13 +207,14 @@ function activate(context) {
 		managerPanel = panel;
 
 		const nonce = String(Date.now());
-		const initialLinks = getConfiguredLinks();
+		const folder = syncActiveFolderKey();
+		await ensureFolderLinksSeeded(folder, activeFolderKey);
 
 		panel.webview.html = getWebviewHtml(panel.webview, context, nonce);
 
 		panel.webview.onDidReceiveMessage(async (message) => {
 			if (message.type === 'ready') {
-				panel.webview.postMessage({ type: 'links', links: initialLinks });
+				panel.webview.postMessage({ type: 'links', links: getConfiguredLinks() });
 				return;
 			}
 			const currentLinks = getConfiguredLinks();
@@ -259,6 +333,14 @@ function activate(context) {
 	const treeView = vscode.window.createTreeView('project-link-toolbox.toolboxView', {
 		treeDataProvider
 	});
+
+	const render = async () => {
+		const folder = syncActiveFolderKey() || getActiveFolder();
+		await ensureFolderLinksSeeded(folder, activeFolderKey);
+		const links = getConfiguredLinks();
+		treeDataProvider.refresh();
+		broadcastLinks(links);
+	};
 
 	const addLinkCommand = vscode.commands.registerCommand('project-link-toolbox.addLink', async function () {
 		const label = await vscode.window.showInputBox({
@@ -406,7 +488,30 @@ function activate(context) {
 		treeDataProvider.refresh();
 		broadcastLinks(updated);
 	});
-	context.subscriptions.push(openLinkCommand, openManagerCommand, addLinkCommand, editLinkCommand, deleteLinkCommand, moveLinkUpCommand, moveLinkDownCommand, moveLinkToTopCommand, moveLinkToBottomCommand, treeView);
+
+	const editorChangeSub = vscode.window.onDidChangeActiveTextEditor(() => {
+		void render();
+	});
+	const folderChangeSub = vscode.workspace.onDidChangeWorkspaceFolders(() => {
+		void render();
+	});
+
+	void render();
+
+	context.subscriptions.push(
+		openLinkCommand,
+		openManagerCommand,
+		addLinkCommand,
+		editLinkCommand,
+		deleteLinkCommand,
+		moveLinkUpCommand,
+		moveLinkDownCommand,
+		moveLinkToTopCommand,
+		moveLinkToBottomCommand,
+		treeView,
+		editorChangeSub,
+		folderChangeSub
+	);
 }
 
 // This method is called when your extension is deactivated
